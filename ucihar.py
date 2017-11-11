@@ -19,7 +19,7 @@ def load_data(train_or_test, x_or_y):
     filename = os.path.join(os.path.curdir, 'UCI-HAR-Dataset', train_or_test, "{0}_{1}.txt".format(x_or_y, train_or_test))
     
     if(x_or_y == 'y'):
-        arr = np.genfromtxt(filename, dtype='int32')
+        arr = np.genfromtxt(filename, dtype='int32') - 1
     else:
         arr = np.genfromtxt(filename, dtype='float32')
 

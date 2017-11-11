@@ -14,43 +14,56 @@ log = logging.getLogger(__name__)
 
 import numpy as np
 import ucihar
-from keras.models import Sequential
-from keras.layers import Dense, Activation
+from neural_net import TwoLayerNet
 
-def one_hot_encoding(raw, number_of_classes):
-    number_of_lines = raw.shape[0]
-    arr = np.zeros((number_of_lines, number_of_classes), dtype='int8')
-    arr[np.arange(number_of_lines), raw - 1] = 1
-    return arr
 
 def main():
     x_train = ucihar.load_data('train', 'X')
     y_train = ucihar.load_data('train', 'y')
-    y_train = one_hot_encoding(y_train, ucihar.Y_CLASSES)
-
-
-    model = Sequential()
-    model.add(Dense(units=100, input_dim=ucihar.X_DIMMENSIONS))
-    model.add(Activation('relu'))
-    model.add(Dense(units=ucihar.Y_CLASSES))
-    model.add(Activation('softmax'))
-
-    model.compile(loss='categorical_crossentropy',
-                optimizer='sgd',
-                metrics=['accuracy'])
-
-
-    model.fit(x_train, y_train, epochs=10, batch_size=32)
-
 
     x_test = ucihar.load_data('test', 'X')
     y_test = ucihar.load_data('test', 'y')
-    y_test = one_hot_encoding(y_test, ucihar.Y_CLASSES)
 
-    loss_and_metrics = model.evaluate(x_test, y_test, batch_size=128)
+    net = TwoLayerNet(
+        input_size=ucihar.X_DIMMENSIONS,
+        hidden_size=100,
+        output_size=ucihar.Y_CLASSES)
 
-    log.info("test set loss: %s", loss_and_metrics[0])
-    log.info("test set accuracy: %s", loss_and_metrics[1])
+    stats = net.train(
+        x_train, y_train, x_test, y_test,
+        num_iters=20000, batch_size=64,
+        learning_rate=1e-2, learning_rate_decay=.95)
+
+    predictions = net.predict(x_test)
+    val_acc = (predictions == y_test).mean()
+    print('Validation accuracy: ', val_acc)
+
+    try: 
+        from sklearn.metrics import classification_report 
+        print(classification_report(y_test, predictions)) 
+    except ImportError: 
+        pass
+
+    try:
+        import matplotlib.pyplot as plt
+        # Plot the loss function and train / validation accuracies
+        plt.subplot(1, 2, 1)
+        plt.plot(stats['loss_history'])
+        plt.title('Loss history')
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+
+        plt.subplot(1, 2, 2)
+        train_plot, = plt.plot(stats['train_acc_history'], label='train')
+        val_plot, = plt.plot(stats['val_acc_history'], label='val')
+        plt.legend(handles=[train_plot, val_plot])
+        plt.title('Classification accuracy history')
+        plt.xlabel('Epoch')
+        plt.ylabel('Clasification accuracy')
+        plt.show()
+    except ImportError:
+        pass
+
 
 if __name__ == '__main__':
     main()

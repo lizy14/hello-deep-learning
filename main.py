@@ -12,9 +12,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-import numpy as np
 import ucihar
-from neural_net import TwoLayerNet
+import tensorflow as tf
 
 
 def main():
@@ -23,48 +22,20 @@ def main():
 
     x_test = ucihar.load_data('test', 'X')
     y_test = ucihar.load_data('test', 'y')
-
-    net = TwoLayerNet(
-        input_size=ucihar.X_DIMMENSIONS,
-        hidden_size=50,
-        output_size=ucihar.Y_CLASSES)
-
-    stats = net.train(
-        x_train, y_train, x_test, y_test,
-        num_iters=100000, batch_size=64,
-        learning_rate=1e-2, learning_rate_decay=1.)
-
-    predictions = net.predict(x_test)
-    val_acc = (predictions == y_test).mean()
-    print('Validation accuracy: ', val_acc)
     
-    try: 
-        from sklearn.metrics import classification_report, confusion_matrix
-        print(confusion_matrix(y_test, predictions)) 
-        print(classification_report(y_test, predictions)) 
-    except ImportError: 
-        pass
+    classifier = tf.estimator.DNNClassifier(
+        hidden_units=[50],
+        feature_columns=[tf.feature_column.numeric_column(i) for i in ucihar.FEATURE_NAMES],
+        n_classes=ucihar.Y_CLASSES)
+    
+    classifier.train(
+        input_fn=lambda: ucihar.train_input_fn(features=x_train, labels=y_train, batch_size=64), 
+        steps=2000)
 
-    try:
-        import matplotlib.pyplot as plt
-        # Plot the loss function and train / validation accuracies
-        plt.subplot(1, 2, 1)
-        plt.plot(stats['loss_history'])
-        plt.title('Loss history')
-        plt.xlabel('Iteration')
-        plt.ylabel('Loss')
+    eval_result = classifier.evaluate(
+        input_fn=lambda: ucihar.eval_input_fn(features=x_test, labels=y_test))
 
-        plt.subplot(1, 2, 2)
-        train_plot, = plt.plot(stats['train_acc_history'], label='train')
-        val_plot, = plt.plot(stats['val_acc_history'], label='val')
-        plt.legend(handles=[train_plot, val_plot])
-        plt.title('Classification accuracy history')
-        plt.xlabel('Epoch')
-        plt.ylabel('Clasification accuracy')
-        plt.show()
-    except ImportError:
-        pass
-
-
+    print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    
 if __name__ == '__main__':
     main()

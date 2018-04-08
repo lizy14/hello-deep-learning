@@ -6,7 +6,7 @@ entry point for UCI HAR classification
 
 import logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)s] %(message)s",
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -26,20 +26,21 @@ def main():
 
     net = TwoLayerNet(
         input_size=ucihar.X_DIMMENSIONS,
-        hidden_size=100,
+        hidden_size=50,
         output_size=ucihar.Y_CLASSES)
 
     stats = net.train(
         x_train, y_train, x_test, y_test,
-        num_iters=20000, batch_size=64,
-        learning_rate=1e-2, learning_rate_decay=.95)
+        num_iters=100000, batch_size=64,
+        learning_rate=1e-2, learning_rate_decay=1.)
 
     predictions = net.predict(x_test)
     val_acc = (predictions == y_test).mean()
     print('Validation accuracy: ', val_acc)
-
+    
     try: 
-        from sklearn.metrics import classification_report 
+        from sklearn.metrics import classification_report, confusion_matrix
+        print(confusion_matrix(y_test, predictions)) 
         print(classification_report(y_test, predictions)) 
     except ImportError: 
         pass

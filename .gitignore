@@ -1,6 +1,12 @@
 # data
 UCI-HAR-Dataset/
 
+# misc
+.vs/
+.vscode/
+*.zip
+*.pyproj
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

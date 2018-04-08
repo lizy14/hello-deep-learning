@@ -68,8 +68,11 @@ class TwoLayerNet(object):
 
     # Compute the forward pass
 
+    # fc1
     h1 = np.dot(X, W1) + b1
-    h1 = np.maximum(h1, 0)
+    # relu
+    h1[h1 <= 0] = 0
+    # fc2
     scores = np.dot(h1, W2) + b2
 
     # If the targets are not given then jump out, we're done
@@ -77,6 +80,7 @@ class TwoLayerNet(object):
       return scores
 
     # Compute the loss
+    
     scores -= np.max(scores)  # for numeric stability
     scores_exp = np.exp(scores)
     softmax = scores_exp / np.sum(scores_exp, axis=1)[:, np.newaxis]
@@ -85,7 +89,7 @@ class TwoLayerNet(object):
     loss = - np.average(np.log(softmax[np.arange(N), y]))
 
     # Backward pass: compute gradients
-    grads = {}
+    grads = {} 
 
     # softmax
     onehot = np.zeros((N, C))
